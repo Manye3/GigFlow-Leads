@@ -1,0 +1,44 @@
+version: '3.8'
+services:
+  db:
+    image: mongo:6
+    container_name: gigflow_mongodb
+    ports:
+      - '27017:27017'
+    volumes:
+      - gigflow_data:/data/db
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: gigflow_backend
+    ports:
+      - '5000:5000'
+    environment:
+      - PORT=5000
+      - MONGODB_URI=mongodb://db:27017/gigflow
+      - JWT_SECRET=supersecretjwtkey_for_development
+      - FRONTEND_URL=http://localhost:5173
+    depends_on:
+      - db
+    volumes:
+      - ./backend/src:/app/src
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: gigflow_frontend
+    ports:
+      - '5173:5173'
+    environment:
+      - VITE_API_URL=http://localhost:5000/api
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+
+volumes:
+  gigflow_data:
